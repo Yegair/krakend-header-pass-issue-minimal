@@ -1,0 +1,81 @@
+version: '3'
+
+services:
+
+  krakend:
+    image: devopsfaith/krakend:1.3.0
+    ports:
+      - 8080:8080
+    volumes:
+      - ./krakend.json:/etc/krakend/krakend.json:ro
+
+  echo:
+    image: mendhak/http-https-echo:19
+
+  oidc-provider:
+    image: soluto/oidc-server-mock:0.3.2
+    ports:
+      - 8081:80
+    # Docs: https://identityserver4.readthedocs.io/en/latest/
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # see https://identityserver4.readthedocs.io/en/latest/reference/options.html
+      SERVER_OPTIONS_INLINE: |
+        {
+          "AccessTokenJwtType": "JWT",
+          "Discovery": {
+            "ShowKeySet": true
+          },
+          "Authentication": {
+            "CookieSameSiteMode": "Lax",
+            "CheckSessionCookieSameSiteMode": "Lax"
+          }
+        }
+      ACCOUNT_OPTIONS_INLINE: |
+        {
+          "AutomaticRedirectAfterSignOut": true
+        }
+      # see https://identityserver4.readthedocs.io/en/latest/reference/api_scope.html
+      API_SCOPES_INLINE: |
+        [
+          { "Name": "dummy" }
+        ]
+      # see https://identityserver4.readthedocs.io/en/latest/reference/api_resource.html
+      API_RESOURCES_INLINE: |
+        [
+          {
+            "Name": "backend",
+            "Scopes": ["dummy"]
+          }
+        ]
+      # see https://identityserver4.readthedocs.io/en/latest/reference/client.html
+      CLIENTS_CONFIGURATION_INLINE: |
+        [
+          {
+            "ClientId": "test",
+            "ClientSecrets": ["test-secret"],
+            "Description": "Test Client",
+            "AllowedGrantTypes": ["password"],
+            "AllowAccessTokensViaBrowser": true,
+            "RedirectUris": [
+              "http://localhost:3000/api/auth/callback",
+            ],
+            "AllowedScopes": [
+              "dummy"
+            ],
+            "IdentityTokenLifetime": 3600,
+            "AccessTokenLifetime": 3600
+          }
+        ]
+      USERS_CONFIGURATION_INLINE: |
+        [
+          {
+            "SubjectId":"test-user",
+            "Username":"TestUser",
+            "Password":"test",
+            "Claims": [
+              { "Type": "name", "Value": "Test" },
+              { "Type": "email", "Value": "test@krakend.io" }
+            ]
+          }
+        ]

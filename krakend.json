@@ -1,0 +1,30 @@
+{
+    "version": 2,
+    "endpoints": [
+        {
+            "endpoint": "/protected",
+            "method": "GET",
+            "output_encoding": "no-op",
+            "headers_to_pass": [
+                "x-user"
+            ],
+            "backend": [
+                {
+                    "host": ["http://echo:8080"],
+                    "url_pattern": "/",
+                    "encoding": "no-op"
+                }
+            ],
+            "extra_config": {
+                "github.com/devopsfaith/krakend-jose/validator": {
+                    "alg": "RS256",
+                    "jwk-url": "http://oidc-provider/.well-known/openid-configuration/jwks",
+                    "disable_jwk_security": true,
+                    "propagate-claims": [
+                        ["sub", "x-user"]
+                    ]
+                }
+            }
+        }
+    ]
+}
